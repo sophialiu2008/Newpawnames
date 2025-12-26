@@ -5,14 +5,17 @@ export default {
     extend: {
       colors: {
         brand: {
-          primary: '#4F46E5', // Indigo 600
+          primary: '#4F46E5', // Indigo 600 - 专业起名主色
           secondary: '#6366F1',
           background: '#F8FAFC',
         }
       },
       animation: {
+        // 页面向上平滑淡入
         'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+        // 向导步骤横向滑入
         'slide-in': 'slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        // 微弱的呼吸感动画（用于加载或选中态）
         'subtle-pulse': 'subtlePulse 2s infinite ease-in-out',
       },
       keyframes: {
