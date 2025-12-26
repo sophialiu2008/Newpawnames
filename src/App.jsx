@@ -26,6 +26,16 @@ const PawNamesApp = () => {
   const [certStep, setCertStep] = useState(1);
   const [rankingFilter, setRankingFilter] = useState('global');
   const [communityTab, setCommunityTab] = useState('stories');
+  const [showStoryModal, setShowStoryModal] = useState(false);
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
+  const [newStory, setNewStory] = useState({
+    petName: '',
+    petType: '🐕',
+    story: ''
+  });
+  const [userStories, setUserStories] = useState([]);
+  const [votedPKs, setVotedPKs] = useState({});
+  const [userChallenges, setUserChallenges] = useState([]);
 
   const petTypes = [
     { id: 'dog', name: '狗狗', emoji: '🐕' },
@@ -1386,7 +1396,8 @@ const PawNamesApp = () => {
         story: '我家Lucky是在一个雨天遇见的，当时它瑟瑟发抖地躲在纸箱里。带回家后，它给我们带来了无数欢乐。Lucky这个名字寓意着幸运，因为遇见它，我们全家都变得更幸运了！',
         likes: 234,
         comments: 45,
-        time: '2小时前'
+        time: '2小时前',
+        isLiked: false
       },
       {
         id: 2,
@@ -1397,7 +1408,8 @@ const PawNamesApp = () => {
         story: '第一次见到奶茶的时候，它那奶茶色的毛发在阳光下特别温暖。它的性格也像奶茶一样，温和甜蜜，每天都能治愈我的心。奶茶这个名字，是我们爱情的见证❤️',
         likes: 189,
         comments: 32,
-        time: '5小时前'
+        time: '5小时前',
+        isLiked: false
       },
       {
         id: 3,
@@ -1408,8 +1420,10 @@ const PawNamesApp = () => {
         story: '雪球是只纯白色的垂耳兔，圆滚滚的样子就像冬天的小雪球。它特别喜欢吃胡萝卜，每次看到它吃东西的样子都觉得超级可爱！',
         likes: 156,
         comments: 28,
-        time: '1天前'
-      }
+        time: '1天前',
+        isLiked: false
+      },
+      ...userStories
     ];
 
     const pkVotes = [
@@ -1417,9 +1431,8 @@ const PawNamesApp = () => {
         id: 1,
         nameA: 'Milo',
         nameB: 'Max',
-        votesA: 1234,
-        votesB: 987,
-        totalVotes: 2221,
+        votesA: 1234 + (votedPKs['1'] === 'A' ? 1 : 0),
+        votesB: 987 + (votedPKs['1'] === 'B' ? 1 : 0),
         petType: '🐕',
         timeLeft: '23小时'
       },
@@ -1427,9 +1440,8 @@ const PawNamesApp = () => {
         id: 2,
         nameA: '小白',
         nameB: '小黑',
-        votesA: 876,
-        votesB: 1045,
-        totalVotes: 1921,
+        votesA: 876 + (votedPKs['2'] === 'A' ? 1 : 0),
+        votesB: 1045 + (votedPKs['2'] === 'B' ? 1 : 0),
         petType: '🐱',
         timeLeft: '15小时'
       }
@@ -1440,7 +1452,7 @@ const PawNamesApp = () => {
         id: 1,
         title: '最有创意的食物系名字',
         emoji: '🍰',
-        participants: 2345,
+        participants: 2345 + userChallenges.filter(c => c.challengeId === 1).length,
         prize: '精美证书',
         deadline: '3天后截止'
       },
@@ -1448,7 +1460,7 @@ const PawNamesApp = () => {
         id: 2,
         title: '双胞胎宠物最佳配对名',
         emoji: '👯',
-        participants: 1876,
+        participants: 1876 + userChallenges.filter(c => c.challengeId === 2).length,
         prize: '社区勋章',
         deadline: '5天后截止'
       },
@@ -1456,11 +1468,62 @@ const PawNamesApp = () => {
         id: 3,
         title: '最霸气的英文名字',
         emoji: '⚡',
-        participants: 1654,
+        participants: 1654 + userChallenges.filter(c => c.challengeId === 3).length,
         prize: '热门推荐',
         deadline: '7天后截止'
       }
     ];
+
+    const handleVote = (pkId, choice) => {
+      setVotedPKs(prev => ({...prev, [pkId]: choice}));
+    };
+
+    const handleSubmitStory = () => {
+      if (newStory.petName && newStory.story) {
+        const story = {
+          id: Date.now(),
+          user: '我',
+          avatar: '😊',
+          petName: newStory.petName,
+          petType: newStory.petType,
+          story: newStory.story,
+          likes: 0,
+          comments: 0,
+          time: '刚刚',
+          isLiked: false
+        };
+        setUserStories(prev => [story, ...prev]);
+        setNewStory({ petName: '', petType: '🐕', story: '' });
+        setShowStoryModal(false);
+      }
+    };
+
+    const handleJoinChallenge = (challengeId, challengeTitle) => {
+      setShowChallengeModal(true);
+      setNewStory(prev => ({ ...prev, challengeId, challengeTitle }));
+    };
+
+    const handleSubmitChallenge = () => {
+      if (newStory.petName && newStory.story) {
+        const entry = {
+          id: Date.now(),
+          challengeId: newStory.challengeId,
+          petName: newStory.petName,
+          petType: newStory.petType,
+          story: newStory.story,
+          time: '刚刚'
+        };
+        setUserChallenges(prev => [...prev, entry]);
+        setNewStory({ petName: '', petType: '🐕', story: '' });
+        setShowChallengeModal(false);
+      }
+    };
+
+    const toggleLike = (storyId) => {
+      setUserStories(prev => prev.map(s => 
+        s.id === storyId ? {...s, likes: s.isLiked ? s.likes - 1 : s.likes + 1, isLiked: !s.isLiked} : s
+      ));
+    };
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
@@ -1528,10 +1591,79 @@ const PawNamesApp = () => {
                   <MessageCircle className="w-6 h-6 text-purple-500" />
                   名字故事墙
                 </h2>
-                <button className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
+                <button 
+                  onClick={() => setShowStoryModal(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                >
                   分享我的故事
                 </button>
               </div>
+
+              {/* 故事发布弹窗 */}
+              {showStoryModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl">
+                    <h3 className="text-2xl font-bold mb-6 text-gray-800">分享你的命名故事</h3>
+                    
+                    <div className="space-y-4 mb-6">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">宠物名字</label>
+                        <input
+                          type="text"
+                          value={newStory.petName}
+                          onChange={(e) => setNewStory({...newStory, petName: e.target.value})}
+                          placeholder="输入宠物名字"
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-400 focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">宠物类型</label>
+                        <div className="flex gap-2">
+                          {['🐕', '🐱', '🐰', '🐹', '🦜'].map(emoji => (
+                            <button
+                              key={emoji}
+                              onClick={() => setNewStory({...newStory, petType: emoji})}
+                              className={`text-3xl p-3 rounded-xl border-2 transition-all ${
+                                newStory.petType === emoji ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
+                              }`}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">你的故事</label>
+                        <textarea
+                          value={newStory.story}
+                          onChange={(e) => setNewStory({...newStory, story: e.target.value})}
+                          placeholder="分享你和宠物名字背后的温馨故事..."
+                          rows={5}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-400 focus:outline-none resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setShowStoryModal(false)}
+                        className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all"
+                      >
+                        取消
+                      </button>
+                      <button
+                        onClick={handleSubmitStory}
+                        disabled={!newStory.petName || !newStory.story}
+                        className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50"
+                      >
+                        发布
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-6">
                 {stories.map(story => (
@@ -1557,8 +1689,13 @@ const PawNamesApp = () => {
 
                     {/* 互动按钮 */}
                     <div className="flex items-center gap-6 pt-4 border-t border-gray-100">
-                      <button className="flex items-center gap-2 text-gray-600 hover:text-pink-500 transition-all">
-                        <Heart className="w-5 h-5" />
+                      <button 
+                        onClick={() => story.id > 1000 ? toggleLike(story.id) : null}
+                        className={`flex items-center gap-2 transition-all ${
+                          story.isLiked ? 'text-pink-500' : 'text-gray-600 hover:text-pink-500'
+                        }`}
+                      >
+                        <Heart className={`w-5 h-5 ${story.isLiked ? 'fill-current' : ''}`} />
                         <span className="font-semibold">{story.likes}</span>
                       </button>
                       <button className="flex items-center gap-2 text-gray-600 hover:text-purple-500 transition-all">
@@ -1591,8 +1728,10 @@ const PawNamesApp = () => {
 
               <div className="space-y-6">
                 {pkVotes.map(pk => {
-                  const percentA = (pk.votesA / pk.totalVotes * 100).toFixed(1);
-                  const percentB = (pk.votesB / pk.totalVotes * 100).toFixed(1);
+                  const totalVotes = pk.votesA + pk.votesB;
+                  const percentA = (pk.votesA / totalVotes * 100).toFixed(1);
+                  const percentB = (pk.votesB / totalVotes * 100).toFixed(1);
+                  const hasVoted = votedPKs[pk.id];
 
                   return (
                     <div key={pk.id} className="bg-white rounded-2xl p-6 shadow-lg">
@@ -1609,7 +1748,17 @@ const PawNamesApp = () => {
 
                       <div className="grid md:grid-cols-2 gap-4 mb-4">
                         {/* 选项A */}
-                        <button className="group bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 hover:from-purple-100 hover:to-purple-200 transition-all border-2 border-transparent hover:border-purple-400">
+                        <button 
+                          onClick={() => !hasVoted && handleVote(pk.id, 'A')}
+                          disabled={hasVoted}
+                          className={`group bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 transition-all border-2 ${
+                            hasVoted === 'A' 
+                              ? 'border-purple-500 shadow-xl' 
+                              : hasVoted 
+                              ? 'border-transparent opacity-60 cursor-not-allowed' 
+                              : 'border-transparent hover:from-purple-100 hover:to-purple-200 hover:border-purple-400'
+                          }`}
+                        >
                           <h3 className="text-3xl font-bold text-gray-800 mb-3">{pk.nameA}</h3>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-purple-600 font-semibold">{pk.votesA} 票</span>
@@ -1617,14 +1766,27 @@ const PawNamesApp = () => {
                           </div>
                           <div className="h-3 bg-white rounded-full overflow-hidden">
                             <div 
-                              className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full transition-all"
+                              className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full transition-all duration-500"
                               style={{width: `${percentA}%`}}
                             ></div>
                           </div>
+                          {hasVoted === 'A' && (
+                            <div className="mt-3 text-sm text-purple-600 font-semibold">✓ 已投票</div>
+                          )}
                         </button>
 
                         {/* 选项B */}
-                        <button className="group bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl p-6 hover:from-pink-100 hover:to-pink-200 transition-all border-2 border-transparent hover:border-pink-400">
+                        <button 
+                          onClick={() => !hasVoted && handleVote(pk.id, 'B')}
+                          disabled={hasVoted}
+                          className={`group bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl p-6 transition-all border-2 ${
+                            hasVoted === 'B' 
+                              ? 'border-pink-500 shadow-xl' 
+                              : hasVoted 
+                              ? 'border-transparent opacity-60 cursor-not-allowed' 
+                              : 'border-transparent hover:from-pink-100 hover:to-pink-200 hover:border-pink-400'
+                          }`}
+                        >
                           <h3 className="text-3xl font-bold text-gray-800 mb-3">{pk.nameB}</h3>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-pink-600 font-semibold">{pk.votesB} 票</span>
@@ -1632,15 +1794,18 @@ const PawNamesApp = () => {
                           </div>
                           <div className="h-3 bg-white rounded-full overflow-hidden">
                             <div 
-                              className="h-full bg-gradient-to-r from-pink-400 to-pink-600 rounded-full transition-all"
+                              className="h-full bg-gradient-to-r from-pink-400 to-pink-600 rounded-full transition-all duration-500"
                               style={{width: `${percentB}%`}}
                             ></div>
                           </div>
+                          {hasVoted === 'B' && (
+                            <div className="mt-3 text-sm text-pink-600 font-semibold">✓ 已投票</div>
+                          )}
                         </button>
                       </div>
 
                       <div className="text-center text-sm text-gray-500">
-                        已有 {pk.totalVotes} 人参与投票
+                        已有 {totalVotes} 人参与投票
                       </div>
                     </div>
                   );
@@ -1660,32 +1825,111 @@ const PawNamesApp = () => {
               </div>
 
               <div className="grid md:grid-cols-2 gap-6 mb-6">
-                {challenges.map(challenge => (
-                  <div key={challenge.id} className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
-                    <div className="text-5xl mb-4 text-center">{challenge.emoji}</div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">
-                      {challenge.title}
-                    </h3>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">参与人数:</span>
-                        <span className="font-semibold text-purple-600">{challenge.participants}</span>
+                {challenges.map(challenge => {
+                  const hasJoined = userChallenges.some(c => c.challengeId === challenge.id);
+                  
+                  return (
+                    <div key={challenge.id} className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all">
+                      <div className="text-5xl mb-4 text-center">{challenge.emoji}</div>
+                      <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">
+                        {challenge.title}
+                      </h3>
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">参与人数:</span>
+                          <span className="font-semibold text-purple-600">{challenge.participants}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">奖励:</span>
+                          <span className="font-semibold text-pink-600">{challenge.prize}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">截止时间:</span>
+                          <span className="font-semibold text-gray-600">{challenge.deadline}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">奖励:</span>
-                        <span className="font-semibold text-pink-600">{challenge.prize}</span>
+                      <button 
+                        onClick={() => handleJoinChallenge(challenge.id, challenge.title)}
+                        disabled={hasJoined}
+                        className={`w-full py-3 rounded-xl font-semibold transition-all ${
+                          hasJoined 
+                            ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg'
+                        }`}
+                      >
+                        {hasJoined ? '✓ 已参与' : '立即参与'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 挑战参与弹窗 */}
+              {showChallengeModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl">
+                    <h3 className="text-2xl font-bold mb-2 text-gray-800">参与挑战</h3>
+                    <p className="text-gray-600 mb-6">{newStory.challengeTitle}</p>
+                    
+                    <div className="space-y-4 mb-6">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">宠物名字</label>
+                        <input
+                          type="text"
+                          value={newStory.petName}
+                          onChange={(e) => setNewStory({...newStory, petName: e.target.value})}
+                          placeholder="输入你的创意名字"
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-400 focus:outline-none"
+                        />
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">截止时间:</span>
-                        <span className="font-semibold text-gray-600">{challenge.deadline}</span>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">宠物类型</label>
+                        <div className="flex gap-2">
+                          {['🐕', '🐱', '🐰', '🐹', '🦜'].map(emoji => (
+                            <button
+                              key={emoji}
+                              onClick={() => setNewStory({...newStory, petType: emoji})}
+                              className={`text-3xl p-3 rounded-xl border-2 transition-all ${
+                                newStory.petType === emoji ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
+                              }`}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">创意说明</label>
+                        <textarea
+                          value={newStory.story}
+                          onChange={(e) => setNewStory({...newStory, story: e.target.value})}
+                          placeholder="分享这个名字的创意和灵感..."
+                          rows={4}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-400 focus:outline-none resize-none"
+                        />
                       </div>
                     </div>
-                    <button className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
-                      立即参与
-                    </button>
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setShowChallengeModal(false)}
+                        className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all"
+                      >
+                        取消
+                      </button>
+                      <button
+                        onClick={handleSubmitChallenge}
+                        disabled={!newStory.petName || !newStory.story}
+                        className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50"
+                      >
+                        提交
+                      </button>
+                    </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
 
               {/* 往期精彩 */}
               <div className="bg-white rounded-2xl p-6 shadow-lg">
